@@ -1,3 +1,6 @@
+from .stack import Stack
+from .memory import Memory
+
 class ExecutionContext: 
     def __init__(self, code = bytes(), pc = 0, stack = Stack(), memory = Memory()) -> None: 
         self.code = code 
@@ -5,6 +8,11 @@ class ExecutionContext:
         self.memory = memory
         self.pc = pc 
         self.stopped = False
+        self.returndata = bytes()
+
+    def set_return_data(self, offset: int, length: int) -> None: 
+        self.stopped = True 
+        self.returndata = self.memory.load_range(offset, length)
 
     def stop(self) -> None: 
         self.stopped = True
@@ -13,3 +21,6 @@ class ExecutionContext:
         value = int.from_bytes(self.code[self.pc:self.pc + num_bytes], "big")
         self.pc += num_bytes
         return value 
+    
+    def __str__(self) -> str: 
+        return f"pc={self.pc}, stack={self.stack}, stopped={self.stopped}"
