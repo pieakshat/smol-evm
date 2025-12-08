@@ -1,6 +1,7 @@
 from .instruction import register_instruction
-from .execution import ExecutionContext
+from .context import ExecutionContext
 from .instruction import Instruction, INSTRUCTIONS_BY_OPCODE
+from typing import Sequence, Union
 
 STOP = register_instruction(0x00, "STOP", (lambda ctx: ctx.stop()))
 PUSH1 = register_instruction(
@@ -27,7 +28,20 @@ RETURN = register_instruction(
     0xf3, 
     "RETURN", 
     (lambda ctx: ctx.set_return_data(ctx.stack.pop(), ctx.stack.pop())), 
-) 
+)
+JUMPDEST = register_instruction(
+    0x58, 
+    "JUMPDEST", 
+    (lambda ctx: ctx), 
+)
+
+JUMP = register_instruction(
+    0x56,
+    "JUMP",
+    (lambda ctx: ctx.set_pc(ctx.stack.pop())),
+)
+
+PUSH32 = register_instruction(0x7f, "PUSH32", (lambda ctx: ctx.stack.push(ctx.read_code(32))))
 
 def decode_opcode(context: ExecutionContext) -> Instruction: 
     if context.pc < 0 or context.pc >= len(context.code): 
@@ -40,6 +54,26 @@ def decode_opcode(context: ExecutionContext) -> Instruction:
         raise UnknownOpcode({"opcode": opcode})
     
     return instruction 
+
+def assemble(instructions: Sequence[Union[Instruction, int]], print_bin=True) -> bytes: 
+    result = bytes() 
+    for item in instructions: 
+        if isinstance(item, Instruction): 
+            result += bytes([item.opcode]) 
+        elif isinstance(item, int):
+            result += int_to_bytes(item) 
+        else: 
+            raise TypeError(f"Unexpected {type(item)} in {instructions}")
+    
+    if print_bin: 
+        print(result.hex())
+    
+    return result
+
+        
+def int_to_bytes(x: int) -> bytes: 
+    return x.to_bytes(max(1, ((x.bit_length()) + 7) // 8), "big") 
+
 
 class InvalidCodeOffset(Exception): 
     ... 

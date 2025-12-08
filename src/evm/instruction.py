@@ -1,4 +1,4 @@
-from .execution import ExecutionContext 
+from .context import ExecutionContext 
 
 INSTRUCTIONS = [] 
 INSTRUCTIONS_BY_OPCODE = {}
