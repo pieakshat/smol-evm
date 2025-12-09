@@ -4,7 +4,7 @@ from .opcodes import decode_opcode
 class ExecutionLimitReached(Exception):
     pass
 
-def run(code: bytes, max_steps: int = None) -> None: 
+def run(code: bytes, max_steps: int = None, verbose: bool = False) -> bytes: 
     context = ExecutionContext(code=code)
     steps = 0
 
@@ -17,8 +17,12 @@ def run(code: bytes, max_steps: int = None) -> None:
         instruction.execute(context)
         steps += 1
 
-        print(f"{instruction} @ pc={pc_before}" )
-        print(context) 
-        print() 
+        if verbose:
+            print(f"{instruction} @ pc={pc_before}" )
+            print(context) 
+            print() 
 
+    if verbose:
         print(f"Output: 0x{context.returndata.hex()}")
+    
+    return context.returndata

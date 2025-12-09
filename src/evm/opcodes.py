@@ -19,7 +19,7 @@ MUL = register_instruction(
     "MUL", 
     (lambda ctx: ctx.stack.push((ctx.stack.pop() * ctx.stack.pop()) % 2**256)),
 )
-MSOTRE8 = register_instruction(
+MSTORE8 = register_instruction(
     0x53, 
     "MSTORE8", 
     (lambda ctx: ctx.memory.store(ctx.stack.pop(), ctx.stack.pop() % 256)), 
@@ -30,7 +30,7 @@ RETURN = register_instruction(
     (lambda ctx: ctx.set_return_data(ctx.stack.pop(), ctx.stack.pop())), 
 )
 JUMPDEST = register_instruction(
-    0x58, 
+    0x5B, 
     "JUMPDEST", 
     (lambda ctx: ctx), 
 )
@@ -41,7 +41,23 @@ JUMP = register_instruction(
     (lambda ctx: ctx.set_pc(ctx.stack.pop())),
 )
 
+JUMPI = register_instruction(
+    0x57, 
+    "JUMPI", 
+    (lambda ctx: execute_JUMPI(ctx)),
+)
+
 PUSH32 = register_instruction(0x7f, "PUSH32", (lambda ctx: ctx.stack.push(ctx.read_code(32))))
+DUP1 = register_instruction(0x80, "DUP1", (lambda ctx: ctx.stack.push(ctx.stack.peek(0))))
+DUP2 = register_instruction(0x81, "DUP2", (lambda ctx: ctx.stack.push(ctx.stack.peek(1))))
+DUP3 = register_instruction(0x82, "DUP3", (lambda ctx: ctx.stack.push(ctx.stack.peek(2))))
+SWAP1 = register_instruction(0x90, "SWAP1", (lambda ctx: ctx.stack.swap(1)))
+SUB = register_instruction(
+    0x03,
+    "SUB",
+    (lambda ctx: (lambda a, b: ctx.stack.push((a - b) % 2**256))(ctx.stack.pop(), ctx.stack.pop())),
+)
+
 
 def decode_opcode(context: ExecutionContext) -> Instruction: 
     if context.pc < 0 or context.pc >= len(context.code): 
@@ -74,9 +90,19 @@ def assemble(instructions: Sequence[Union[Instruction, int]], print_bin=True) ->
 def int_to_bytes(x: int) -> bytes: 
     return x.to_bytes(max(1, ((x.bit_length()) + 7) // 8), "big") 
 
+def execute_JUMPI(ctx: ExecutionContext): 
+    target_pc = ctx.stack.pop()
+    cond = ctx.stack.pop()
+    if cond != 0:  
+        ctx.set_pc(target_pc)
+
+
 
 class InvalidCodeOffset(Exception): 
     ... 
 
 class UnknownOpcode(Exception): 
+    ... 
+
+class InvalidJumpDestination(Exception): 
     ... 

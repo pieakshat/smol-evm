@@ -17,15 +17,23 @@ def valid_jump_destinations(code: bytes) -> set[int]:
 
     return jumpdests
 
+class Calldata: 
+    def __init__(self, data=bytes()) -> None: 
+        self.data = data 
+
+    def __len__(self) -> int: 
+        return len(self.data)
+
 
 class ExecutionContext: 
-    def __init__(self, code = bytes(), pc = 0, stack = Stack(), memory = Memory()) -> None: 
+    def __init__(self, code = bytes(), pc = 0, stack = Stack(), memory = Memory(), calldata = None) -> None: 
         self.code = code 
         self.stack = stack 
         self.memory = memory
         self.pc = pc 
         self.stopped = False
         self.returndata = bytes()
+        self.calldata = calldata if calldata else Calldata()
 
     def set_return_data(self, offset: int, length: int) -> None: 
         self.stopped = True 
@@ -41,6 +49,9 @@ class ExecutionContext:
         value = int.from_bytes(self.code[self.pc:self.pc + num_bytes], "big")
         self.pc += num_bytes
         return value 
+    
+    def set_program_counter(self, pc: int) -> None:
+        self.pc = pc
     
     def __str__(self) -> str: 
         return f"pc={self.pc}, stack={self.stack}, stopped={self.stopped}"
