@@ -57,7 +57,64 @@ SUB = register_instruction(
     "SUB",
     (lambda ctx: (lambda a, b: ctx.stack.push((a - b) % 2**256))(ctx.stack.pop(), ctx.stack.pop())),
 )
+CALLDATALOAD = register_instruction(
+    0x35, 
+    "CALLDATALOAD", 
+    lambda ctx: ctx.stack.push(ctx.calldata.read_word(ctx.stack.pop()))
+)
+CALLDATASIZE = register_instruction(
+    0x36, 
+    "CALLDATASIZE", 
+    lambda ctx: ctx.stack.push(len(ctx.calldata))
+)
+LT = register_instruction(
+    0x10, 
+    "LT", 
+    execute_LT, 
+)
+GT = register_instruction(
+    0x11, 
+    "GT", 
+    execute_GT, 
+)
+EQ = register_instruction(
+    0x14, 
+    "EQ", 
+    lambda ctx: ctx.stack.push(1 if ctx.stack.pop() == ctx.stack.pop() else 0)
+)
+ISZERO = register_instruction(
+    0x15, 
+    "ISZERO", 
+    lambda ctx: ctx.stack.push(1 if ctx.stack.pop() == 0 else 0)
+)
+SHR = register_instruction(
+    0x1c, 
+    "SHR", 
+    execute_SHR, 
+)
+POP = register_instruction(
+    0x50, 
+    "POP", 
+    lambda ctx: ctx.stack.pop()
+)
+RETURN = register_instruction(
+    0xF3, 
+    "RETURN", 
+    (lambda ctx: ctx.set_return_data(ctx.stack.pop(), ctx.stack.pop()))
+)
 
+def execute_SHR(ctx: ExecutionContext) -> int: 
+    a, b = ctx.stack.pop(), ctx.stack.pop()
+    ctx.stack.push(a >> b)
+
+def execute_GT(ctx: ExecutionContext) -> int: 
+    a, b = ctx.stack.pop(), ctx.stack.pop()
+    ctx.stack.push(1 if a > b else 0)
+
+
+def execute_LT(ctx: ExecutionContext) -> int :
+    a, b = ctx.stack.pop(), ctx.stack.pop()
+    ctx.stack.push(1 if a < b else 0)
 
 def decode_opcode(context: ExecutionContext) -> Instruction: 
     if context.pc < 0 or context.pc >= len(context.code): 

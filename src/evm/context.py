@@ -24,6 +24,17 @@ class Calldata:
     def __len__(self) -> int: 
         return len(self.data)
 
+    def read_byte(self, offset: int) -> int: 
+        if offset < 0: 
+            raise InvalidCalldataAccess({"offset": offset})
+
+        return self.data[offset] if offset < len(self.data) else 0
+    
+    def read_word(self, offset: int) -> int: 
+        return int.from_bytes(
+            [self.read_byte(x) for x in range(offset, offset + 32)], "big"
+        )
+
 
 class ExecutionContext: 
     def __init__(self, code = bytes(), pc = 0, stack = Stack(), memory = Memory(), calldata = None) -> None: 

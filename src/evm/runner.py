@@ -4,8 +4,15 @@ from .opcodes import decode_opcode
 class ExecutionLimitReached(Exception):
     pass
 
-def run(code: bytes, max_steps: int = None, verbose: bool = False) -> bytes: 
-    context = ExecutionContext(code=code)
+def run(
+    code: bytes, 
+    max_steps: int = None,
+    verbose: bool = False, 
+    max_steps=0, 
+    prehook = None, 
+    posthook = None, 
+    ) -> bytes: 
+    context = ExecutionContext(code=code, calldata = Calldata(calldata))
     steps = 0
 
     while not context.stopped: 
@@ -14,7 +21,15 @@ def run(code: bytes, max_steps: int = None, verbose: bool = False) -> bytes:
         
         pc_before = context.pc
         instruction = decode_opcode(context) 
+
+        if prehook: 
+            prehook(context, instruction)
+        
         instruction.execute(context)
+
+        if posthook: 
+            posthook(context, instruction)
+            
         steps += 1
 
         if verbose:
